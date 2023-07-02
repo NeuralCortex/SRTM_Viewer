@@ -1,0 +1,316 @@
+/*
+indigo:#3f51b5
+indigo hover:#606fc7
+blue:#2196F3
+blue hover:#51adf6
+*/
+
+.root{
+    -fx-font: 10px "Arial";
+}
+
+.chart-legend {
+   -fx-background-color:  transparent;
+   -fx-padding: 20px;
+}
+.chart-legend-item-symbol{
+   -fx-background-radius: 0;
+}
+.chart-legend-item{
+    -fx-text-fill: #191970;
+}
+.chart-alternative-row-fill {
+    -fx-fill: #99bcfd;
+    -fx-stroke: transparent;
+    -fx-stroke-width: 0;
+}
+.chart-title {
+  -fx-text-fill: #3f51b5;
+  -fx-font-size: 1.8em;
+  -fx-font-weight: bold;
+}
+
+/*Menus*/
+#hec-menu-bar.menu-bar{
+    -fx-background-color: #3f51b5;
+}
+#hec-menu-bar.menu-bar .label{
+    -fx-text-fill: white;
+}
+#hec-menu-item.menu-item .label{
+    -fx-text-fill: black;
+    /*-fx-background-color: #3f51b5;*/
+}
+
+.scroll-pane {
+    -fx-background-color:transparent;
+}
+
+#hec-background-green{
+    -fx-background-color:greenyellow;
+}
+
+#hec-background-red{
+    -fx-background-color:red;
+}
+
+#hec-background-black{
+    -fx-background-color:black;
+}
+
+#hec-background-black-border{
+    -fx-background-color:black;
+    -fx-border-color: #2196F3 ;
+    -fx-border-width: 3 ; 
+}
+
+#hec-text-white{
+    -fx-text-fill: white;
+}
+
+#hec-text-red{
+    -fx-text-fill: red;
+}
+
+#hec-text-15{
+    -fx-font: 15px "Arial";
+}
+
+#hec-text-12{
+    -fx-font: 12px "Arial";
+}
+
+#hec-text-10{
+    -fx-font: 10px "Arial";
+}
+
+#hec-text-8{
+    -fx-font: 8px "Arial";
+}
+
+#hec-text-15-red{
+    -fx-text-fill: red;
+    -fx-font: bold 15px "Arial";
+}
+
+#hec-text-15-white{
+    -fx-text-fill: white;
+    -fx-font: bold 15px "Arial";
+}
+
+#hec-text-20{
+    -fx-font: bold 20px "Arial";
+}
+
+#hec-code-green{
+    -fx-font: bold 20px "Arial";
+    -fx-text-fill: rgb(0,255,0);
+}
+
+#hec-code-red{
+    -fx-font: bold 20px "Arial";
+    -fx-text-fill: rgb(255,0,0);
+}
+
+.range-slider .range-bar{
+    -fx-background-color:#2196F3;
+}
+
+/*Dialoge*/
+/*
+.dialog-pane{
+    -fx-border-color: #3f51b5;
+    -fx-border-width: 1px;
+}
+*/
+.dialog-pane:header *.header-panel{
+    -fx-background-color:#2196F3;
+}
+.dialog-pane:header *.header-panel *.label{
+    -fx-font: 20px "Arial";
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.text-field{
+    -fx-background-radius: 0;
+}
+.password-field{
+    -fx-background-radius: 0;
+}
+
+#hec-background-blue{
+    -fx-background-color: #2196F3;
+}
+
+#hec-background-orange{
+    -fx-background-color: #ffdc75;
+}
+
+/*Buttons*/
+#hec-btn-blue{
+    -fx-background-color: #2196F3;
+    -fx-text-fill: white;
+    -fx-background-radius: 0;
+}
+#hec-btn-blue:hover{
+    -fx-background-color: #51adf6;
+}
+#hec-btn-blue:pressed{
+    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );
+}
+
+#hec-btn-indigo{
+    -fx-background-color: #3f51b5;
+    -fx-text-fill: white;
+    -fx-background-radius: 0;
+}
+#hec-btn-indigo:hover{
+    -fx-background-color: #606fc7;
+}
+#hec-btn-indigo:pressed{
+    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );
+}
+
+#hec-btn-green{
+    -fx-background-color: #00ff00;
+    -fx-text-fill: black;
+    -fx-background-radius: 0;
+}
+#hec-btn-green:hover{
+    -fx-background-color: #7fff7f;
+}
+#hec-btn-green:pressed{
+    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );
+}
+
+#hec-btn-red{
+    -fx-background-color: #ff0000;
+    -fx-text-fill: black;
+    -fx-background-radius: 0;
+}
+#hec-btn-red:hover{
+    -fx-background-color: #ff7f7f;
+}
+#hec-btn-red:pressed{
+    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );
+}
+
+/*Progress Bar*/
+.progress-bar .track{
+    -fx-border-radius: 0;
+    -fx-background-radius: 0;
+}
+.progress-bar .bar {
+    -fx-background-radius: 0;
+    -fx-background-color: #2196F3;
+}
+
+/*Table View*/
+.table-view{
+    -fx-focus-color:transparent;
+    -fx-selection-bar:#2196F3;
+    -fx-selection-bar-non-focused:#51adf6;
+}
+
+.list-view{
+    -fx-focus-color:transparent;
+    -fx-selection-bar:#2196F3;
+    -fx-selection-bar-non-focused:#51adf6;
+}
+
+.tree-table-view{
+    -fx-focus-color:transparent;
+    -fx-selection-bar:#2196F3;
+    -fx-selection-bar-non-focused:#51adf6;
+}
+
+/* Paginator Remove spacing */
+.pagination > .pagination-control > .control-box {
+    -fx-spacing: 0;
+}
+
+/* You can control the actual button sizes here */
+.pagination > .pagination-control > .control-box > .number-button,
+.pagination > .pagination-control > .control-box > .bullet-button,
+.pagination > .pagination-control > .control-box > .left-arrow-button,
+.pagination > .pagination-control > .control-box > .right-arrow-button {
+    -fx-background-insets: 0, 1;
+    -fx-background-color: lightgray, #FAFAFA;
+    /*-fx-min-width: 30;
+    -fx-min-height: 30;*/
+}
+
+/* Colors on hover */
+.pagination > .pagination-control > .control-box > .number-button:hover,
+.pagination > .pagination-control > .control-box > .bullet-button:hover,
+.pagination > .pagination-control > .control-box > .left-arrow-button:hover,
+.pagination > .pagination-control > .control-box > .right-arrow-button:hover {
+    -fx-background-insets: 0;
+    -fx-background-color: lightgray;
+}
+
+/* Selected toggle color */
+.pagination > .pagination-control > .control-box > .number-button:selected,
+.pagination > .pagination-control > .control-box > .bullet-button:selected{
+    -fx-background-insets: 0;
+    -fx-background-color: #2196F3;
+    -fx-text-fill: white;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-opacity: 0;
+}
+.tab-pane .tab{
+    -fx-background-color: #2196F3;
+
+}
+.tab-pane .tab:selected{
+    -fx-background-color: #3f51b5;
+}
+
+.hec-tab-orange{
+    -fx-background-color: #ffa500!important;
+}
+.hec-tab-orange:selected{
+    -fx-background-color: #7f5200!important;
+}
+.hec-tab-orange.left{
+    -fx-background-radius: 10 0 0 0;
+}
+.hec-tab-orange.left:selected .focus-indicator{
+    -fx-background-radius: 10 0 0 0;
+}
+
+.hec-tab-coral{
+    -fx-background-color: #ff7f50!important;
+}
+.hec-tab-coral:selected{
+    -fx-background-color: #7F3F28!important;
+}
+.hec-tab-coral.left{
+    -fx-background-radius: 10 0 0 0;
+}
+.hec-tab-coral.left:selected .focus-indicator{
+    -fx-background-radius: 10 0 0 0;
+}
+
+.tab {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+.tab{
+    -fx-background-radius: 0 10 0 0;
+}
+.tab .tab-label { 
+    -fx-text-fill: white;
+}
+.tab:selected .focus-indicator {
+    -fx-border-radius: 0 10 0 0;
+}
+
+/*
+.tab:selected .tab-label { 
+    -fx-text-fill: white;
+}
+*/

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+<comment>Comment</comment>
+<entry key="SRTM_DIR">C:\Users\pscha\Documents\NetBeansProjects\POV_RAY</entry>
+<entry key="SRTM_TILE_DIR">D:\Geo\SRTM3\Germany</entry>
+</properties>
