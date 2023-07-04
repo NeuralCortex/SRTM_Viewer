@@ -2,6 +2,7 @@ package com.fx.srtm.thread;
 
 import com.fx.srtm.pojo.ColorRow;
 import com.fx.srtm.pojo.RectangleInfo;
+import com.fx.srtm.pojo.Range;
 import com.fx.srtm.pojo.SrtmRaster;
 import com.fx.srtm.tools.HelperFunctions;
 import java.awt.Point;
@@ -30,7 +31,13 @@ public class SrtmMapBoundsThread extends Thread {
     private final int max;
 
     private final List<ColorRow> colors;
-    private final int size = 1201;
+    private int size = 0;
+
+    public interface RangeListener {
+
+        public void getRange(Range range);
+    }
+    private RangeListener rangeListener;
 
     public SrtmMapBoundsThread(RectangleInfo matrix[][], JXMapViewer map, short bigMap[][], SrtmRaster srtmRaster, int min, int max, List<ColorRow> colors) {
         this.matrix = matrix;
@@ -40,6 +47,7 @@ public class SrtmMapBoundsThread extends Thread {
         this.min = min;
         this.max = max;
         this.colors = colors;
+        this.size = bigMap.length;
     }
 
     @Override
@@ -59,13 +67,16 @@ public class SrtmMapBoundsThread extends Thread {
         0-1
         3-2
          */
+        
         int resHor = (int) ((pt1.getX() - pt0.getX()));
         int resVer = (int) ((pt3.getY() - pt0.getY()));
 
         int horStep = (int) (size / (double) resHor);
         int verStep = (int) (size / (double) resVer);
 
-        if (horStep < 1 && verStep < 1) {
+        //System.out.println("horStep: " + horStep + " " + verStep);
+
+        if (horStep < 2 && verStep < 2) {
             horStep = 1;
             verStep = 1;
         }
@@ -83,7 +94,6 @@ public class SrtmMapBoundsThread extends Thread {
         double unten = geoBounds.getSouthEast().getLatitude();
 
         //System.out.println("l: " + links + " r: " + rechts);
-
         int linksGanz = (int) links;
         int rechtsGanz = (int) rechts;
 
@@ -98,13 +108,37 @@ public class SrtmMapBoundsThread extends Thread {
 
         //System.out.println("ld: " + linksDez + " rd: " + rechtsDez);
 
-        int size = 1201;
+        String fileName = srtmRaster.getFileName();
 
         int xStart = (int) (Math.floor(size * linksDez));
         int xEnde = (int) (Math.ceil(size * rechtsDez));
 
-        int yStart = size - (int) (Math.ceil(size * obenDez));
-        int yEnde = size - (int) (Math.floor(size * untenDez));
+        int yStart = (int) (Math.ceil(size * obenDez));
+        int yEnde = (int) (Math.floor(size * untenDez));
+
+        if (fileName.toUpperCase().contains("N") && fileName.toUpperCase().contains("E")) {
+            yStart = size - yStart;
+            yEnde = size - yEnde;
+        }
+
+        if (fileName.toUpperCase().contains("N") && fileName.toUpperCase().contains("W")) {
+            xStart = size + xStart;
+            xEnde = size + xEnde;
+            yStart = size - yStart;
+            yEnde = size - yEnde;
+        }
+
+        if (fileName.toUpperCase().contains("S") && fileName.toUpperCase().contains("E")) {
+            yStart = -yStart;
+            yEnde = -yEnde;
+        }
+
+        if (fileName.toUpperCase().contains("S") && fileName.toUpperCase().contains("W")) {
+            xStart = size + xStart;
+            xEnde = size + xEnde;
+            yStart = -yStart;
+            yEnde = -yEnde;
+        }
 
         if (lrLon > geoPosition1.getLongitude()) {
             xEnde = size;
@@ -122,23 +156,27 @@ public class SrtmMapBoundsThread extends Thread {
             yEnde = size;
         }
 
-        //System.out.println("xs: " + xStart + " xe: " + xEnde);
-        //System.out.println("ys: " + yStart + " ye: " + yEnde);
+        /*
+        System.out.println("xs: " + xStart + " xe: " + xEnde);
+        System.out.println("ys: " + yStart + " ye: " + yEnde);
 
-        //horStep = (int) ((xEnde-xStart) / (double) resHor);
-        //verStep = (int) ((yEnde-yStart) / (double) resVer);
-        //System.out.println("yDiff: " + (yEnde - yStart));
+        System.out.println("ulLon: " + ulLon);
+        System.out.println("ulLat: " + ulLat);
+        System.out.println("lrLon: " + lrLon);
+        System.out.println("lrLat: " + lrLat);
+        */
 
-        //for (int y = start; y < end; y += verStep) {
+        int visible = 0;
+
         for (int y = yStart; y < yEnde; y += verStep) {
-            //for (int x = 0; x < size; x += horStep) {
+
             for (int x = xStart; x < xEnde; x += horStep) {
 
                 double ver = y / (double) (size);
                 double hor = x / (double) (size);
 
                 GeoPosition geoPosition = new GeoPosition(srtmRaster.getCoord0().getLat() - ver, srtmRaster.getCoord0().getLon() + hor);
-                //geoposition ist UL
+              
                 Point2D ptHeight = map.getTileFactory().geoToPixel(geoPosition, map.getZoom());
 
                 GeoPosition geoPositionLL = new GeoPosition(srtmRaster.getCoord0().getLat() - ver - (1.0 / size), srtmRaster.getCoord0().getLon() + hor);
@@ -164,18 +202,26 @@ public class SrtmMapBoundsThread extends Thread {
                 Point point = new Point((int) ptHeight.getX(), (int) ptHeight.getY());
 
                 Rectangle rectangle = new Rectangle((int) point.getX(), (int) point.getY(), (int) (ptHeightUR.getX() - ptHeight.getX()), (int) (ptHeightLL.getY() - ptHeight.getY()));
-                //matrix[y][x] = new RectangleInfo(new Rectangle(point), color);
+
                 if (geoPosition.getLongitude() > ulLon && geoPositionUR.getLongitude() < lrLon) {
                     if (geoPosition.getLatitude() < ulLat && geoPositionLR.getLatitude() > lrLat) {
                         matrix[y][x] = new RectangleInfo(rectangle, color, height);
+                        visible++;
                     }
                 }
 
                 GeoBounds rand = new GeoBounds(geoPositionLL.getLatitude(), geoPositionLL.getLongitude(), geoPositionUR.getLatitude(), geoPositionUR.getLongitude());
                 if (geoBounds.intersects(rand)) {
                     matrix[y][x] = new RectangleInfo(rectangle, color, height);
+                    visible++;
                 }
             }
         }
+        //System.out.println("Visible Rects: " + visible);
+        rangeListener.getRange(new Range(xStart, xEnde, yStart, yEnde, horStep, verStep));
+    }
+
+    public void setRangeListener(RangeListener rangeListener) {
+        this.rangeListener = rangeListener;
     }
 }

@@ -108,6 +108,7 @@
                         <Button fx:id="btnLoad" mnemonicParsing="false" text="Button" />
                         <CheckBox fx:id="cbAlpha" mnemonicParsing="false" text="CheckBox" />
                         <Label fx:id="lbTile" text="Label" />
+                        <Label fx:id="lbType" text="Label" />
                         <HBox HBox.hgrow="ALWAYS" />
                         <Label fx:id="lbTileMouse" />
                         <TextField fx:id="tfLon" />

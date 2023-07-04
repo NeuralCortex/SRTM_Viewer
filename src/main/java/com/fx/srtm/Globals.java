@@ -18,6 +18,10 @@ public class Globals {
     //ByteOrder
     public static ByteOrder BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
 
+    //File Size
+    public static int SRTM_1_SIZE = 3601;
+    public static int SRTM_3_SIZE = 1201;
+
     //Debug Infos - Ein / Aus
     public static boolean DEBUG = true;
 
@@ -25,7 +29,7 @@ public class Globals {
     public static boolean SHOW_TEST_UI = false;
 
     //Fenstergröße global gesteuert in 16:9
-    public static final double HEIGHT = 900;//900.0f;
+    public static final double HEIGHT = 720;//900.0f;
     public static final double WIDTH = HEIGHT * 18.0f / 9.0f;
 
     //Schalter für Maximized Ein / Aus

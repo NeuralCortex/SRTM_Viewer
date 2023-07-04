@@ -1,22 +1,24 @@
-# SRTM3-Viewer 1.0.0
+# SRTM-Viewer 1.1.0
 
 ## Funktionsweise des Programms
 
 Der SRTM-Viewer ist ein JavaFX Projekt, welches ermöglicht topografische Daten</br>
 der NASA Mission STS-99 [Shuttle Radar Topography Mission (SRTM)](https://de.wikipedia.org/wiki/STS-99) grafisch anzuzeigen und auszuwerten.</br>
 Dabei ist es möglich die für eine bestimme Gegend benötigte Kachel grafisch zu ermitteln, oder die geladenen Kachel als PNG zu speichern.</br>
-Das Programm kann zur Zeit nur SRTM3-Dateien verarbeiten, das heißt nur Daten mit einer Auflösung von 3 Winkelsekunden.
+Das Programm kann zur Zeit nur SRTM3-Dateien verarbeiten, das heißt nur Daten mit einer Auflösung von 3 Winkelsekunden.</br>
+Die neue Version unterstützt auch SRTM1-Dateien.
 
 ## How the program works
 
 The SRTM viewer is a JavaFX project that enables topographical data</br>
 of the NASA Mission STS-99 [Shuttle Radar Topography Mission (SRTM)](https://de.wikipedia.org/wiki/STS-99) graphically and evaluate.</br>
 It is possible to determine the tile required for a specific area graphically, or to save the loaded tile as PNG.</br>
-The program can currently only process SRTM3 files , ie only data with a resolution of 3 arc-seconds.
+The program can currently only process SRTM3 files , ie only data with a resolution of 3 arc-seconds.</br>
+The new version also supports SRTM1 files.
 
 ## Aufbau einer Datei
 
-Der Dateiname hat typischerweise die Form: "N50E010.hgt". Eine Datei enthält 1201 x 1201 Werte.
+Der Dateiname hat typischerweise die Form: "N50E010.hgt".
 
 ### Interner Aufbau
 
@@ -32,9 +34,19 @@ Nord X=0,Y=1201 ********************* X=1201,Y=1201</br>
                 West              Ost
 </pre>
 
+<pre>
+                1x1 Grad SRTM1-Kachel
+Nord X=0,Y=3601 ********************* X=3601,Y=3601</br>
+                *********************</br>
+                *********************</br>
+                *********************</br>
+    Süd X=0,Y=0 ********************* X=3601,Y=0</br>
+                West              Ost
+</pre>
+
 ## Structure of a file
 
-The file name typically has the form: "N50E010.hgt". The file contains 1201 x 1201 values.
+The file name typically has the form: "N50E010.hgt".
 
 ### Internal structure
 
@@ -47,6 +59,16 @@ North X=0,Y=1201 ********************* X=1201,Y=1201</br>
                  *********************</br>
                  *********************</br>
    South X=0,Y=0 ********************* X=1201,Y=0</br>
+                 West             East
+</pre>
+
+<pre>
+                 1x1 degree SRTM1 tile
+North X=0,Y=3601 ********************* X=3601,Y=3601</br>
+                 *********************</br>
+                 *********************</br>
+                 *********************</br>
+   South X=0,Y=0 ********************* X=3601,Y=0</br>
                  West             East
 </pre>
 
