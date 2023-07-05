@@ -199,6 +199,10 @@ public class TileController implements Initializable, PopulateInterface {
         cbHf.setText(bundle.getString("cb.marker"));
         cbCol.setText(bundle.getString("cb.marker"));
         cbPov.setText(bundle.getString("cb.marker"));
+        
+        cbHf.setSelected(true);
+        cbCol.setSelected(true);
+        cbPov.setSelected(true);
 
         TableColumn<ColorRow, Integer> colIndex = new TableColumn<>(bundle.getString("table.idx"));
         TableColumn<ColorRow, Double> colPercent = new TableColumn<>(bundle.getString("table.percent"));
