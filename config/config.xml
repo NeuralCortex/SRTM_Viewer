@@ -3,5 +3,5 @@
 <properties>
 <comment>Comment</comment>
 <entry key="SRTM_DIR">D:\Geo\SRTM1\Region_07</entry>
-<entry key="SRTM_TILE_DIR">D:\Geo\SRTM3</entry>
+<entry key="SRTM_TILE_DIR">D:\Geo\SRTM1</entry>
 </properties>

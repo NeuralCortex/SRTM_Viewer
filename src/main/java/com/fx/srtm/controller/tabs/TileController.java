@@ -199,7 +199,7 @@ public class TileController implements Initializable, PopulateInterface {
         cbHf.setText(bundle.getString("cb.marker"));
         cbCol.setText(bundle.getString("cb.marker"));
         cbPov.setText(bundle.getString("cb.marker"));
-        
+
         cbHf.setSelected(true);
         cbCol.setSelected(true);
         cbPov.setSelected(true);
@@ -478,6 +478,10 @@ public class TileController implements Initializable, PopulateInterface {
                         double percent = HelperFunctions.getPercentFromHeight(min, max, h / 100.0) * 255.0f;
                         bufferedImage.setRGB(j, i, HelperFunctions.RGBtoInt((int) percent, (int) percent, (int) percent));
 
+                        if (cbHf.isSelected() && marker != null) {
+                            drawPosInPng(bufferedImage.createGraphics(), width, height);
+                        }
+
                     } else if (export_type == Globals.EXPORT_TYPE.COLOR_MAP) {
 
                         double percent = HelperFunctions.getPercentFromHeight(min, max, h);
@@ -490,6 +494,10 @@ public class TileController implements Initializable, PopulateInterface {
                         java.awt.Color c = new java.awt.Color((int) (red * 255), (int) (green * 255), (int) (blue * 255));
                         bufferedImage.setRGB(j, i, c.getRGB());
 
+                        if (cbCol.isSelected() && marker != null) {
+                            drawPosInPng(bufferedImage.createGraphics(), width, height);
+                        }
+
                     } else if (export_type == Globals.EXPORT_TYPE.POV_RAY) {
 
                         double percent = HelperFunctions.getPercentFromHeight(min, max, h / 100.0) * 255.0f;
@@ -498,13 +506,6 @@ public class TileController implements Initializable, PopulateInterface {
                     }
 
                 }
-            }
-
-            if (cbHf.isSelected() && marker != null) {
-                drawPosInPng(bufferedImage.createGraphics(), width, height);
-            }
-            if (cbCol.isSelected() && marker != null) {
-                drawPosInPng(bufferedImage.createGraphics(), width, height);
             }
 
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -546,8 +547,25 @@ public class TileController implements Initializable, PopulateInterface {
                     int lon = pngPos.getLon();
                     int lat = pngPos.getLat();
 
-                    x = lon / (double) (width);
-                    z = lat / (double) (height);
+                    if (lbTile.getText().toUpperCase().contains("N") && lbTile.getText().toUpperCase().contains("E")) {
+                        x = lon / (double) (width);
+                        z = 1.0 - lat / (double) (height);
+                    }
+
+                    if (lbTile.getText().toUpperCase().contains("S") && lbTile.getText().toUpperCase().contains("E")) {
+                        x = lon / (double) (width);
+                        z = 1.0 - lat / (double) (height);
+                    }
+
+                    if (lbTile.getText().toUpperCase().contains("N") && lbTile.getText().toUpperCase().contains("W")) {
+                        x = lon / (double) (width);
+                        z = 1.0 - lat / (double) (height);
+                    }
+
+                    if (lbTile.getText().toUpperCase().contains("S") && lbTile.getText().toUpperCase().contains("W")) {
+                        x = lon / (double) (width);
+                        z = 1.0 - lat / (double) (height);
+                    }
                 }
 
                 String fileName = "";
@@ -630,6 +648,9 @@ public class TileController implements Initializable, PopulateInterface {
 
         double diffLon = dezLon - intLon;
         double diffLat = dezLat - intLat;
+
+        double diffLonPov = diffLon;
+        double diffLatPov = diffLat;
 
         //NE
         if (markLon > 0 && markLat > 0) {
