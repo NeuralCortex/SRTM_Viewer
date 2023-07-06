@@ -478,10 +478,6 @@ public class TileController implements Initializable, PopulateInterface {
                         double percent = HelperFunctions.getPercentFromHeight(min, max, h / 100.0) * 255.0f;
                         bufferedImage.setRGB(j, i, HelperFunctions.RGBtoInt((int) percent, (int) percent, (int) percent));
 
-                        if (cbHf.isSelected() && marker != null) {
-                            drawPosInPng(bufferedImage.createGraphics(), width, height);
-                        }
-
                     } else if (export_type == Globals.EXPORT_TYPE.COLOR_MAP) {
 
                         double percent = HelperFunctions.getPercentFromHeight(min, max, h);
@@ -494,10 +490,6 @@ public class TileController implements Initializable, PopulateInterface {
                         java.awt.Color c = new java.awt.Color((int) (red * 255), (int) (green * 255), (int) (blue * 255));
                         bufferedImage.setRGB(j, i, c.getRGB());
 
-                        if (cbCol.isSelected() && marker != null) {
-                            drawPosInPng(bufferedImage.createGraphics(), width, height);
-                        }
-
                     } else if (export_type == Globals.EXPORT_TYPE.POV_RAY) {
 
                         double percent = HelperFunctions.getPercentFromHeight(min, max, h / 100.0) * 255.0f;
@@ -505,6 +497,16 @@ public class TileController implements Initializable, PopulateInterface {
 
                     }
 
+                }
+            }
+
+            if (export_type == Globals.EXPORT_TYPE.HEIGHT_FIELD) {
+                if (cbHf.isSelected() && marker != null) {
+                    drawPosInPng(bufferedImage.createGraphics(), width, height);
+                }
+            } else if (export_type == Globals.EXPORT_TYPE.COLOR_MAP) {
+                if (cbCol.isSelected() && marker != null) {
+                    drawPosInPng(bufferedImage.createGraphics(), width, height);
                 }
             }
 
