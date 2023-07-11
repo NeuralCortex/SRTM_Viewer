@@ -284,6 +284,11 @@ public class TileController implements Initializable, PopulateInterface {
                         count++;
                     }
 
+                    //Heightfield Fix
+                    for (int x = 0; x < size; x++) {
+                        bigMap[size - 1][x] = bigMap[size - 2][x];
+                    }
+
                 } catch (Exception ex) {
                     _log.info(file.getPath() + " not found.");
                 }

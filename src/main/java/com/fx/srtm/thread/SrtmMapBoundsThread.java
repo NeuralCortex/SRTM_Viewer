@@ -67,7 +67,6 @@ public class SrtmMapBoundsThread extends Thread {
         0-1
         3-2
          */
-        
         int resHor = (int) ((pt1.getX() - pt0.getX()));
         int resVer = (int) ((pt3.getY() - pt0.getY()));
 
@@ -75,7 +74,6 @@ public class SrtmMapBoundsThread extends Thread {
         int verStep = (int) (size / (double) resVer);
 
         //System.out.println("horStep: " + horStep + " " + verStep);
-
         if (horStep < 2 && verStep < 2) {
             horStep = 1;
             verStep = 1;
@@ -107,7 +105,6 @@ public class SrtmMapBoundsThread extends Thread {
         double untenDez = unten - (double) untenGanz;
 
         //System.out.println("ld: " + linksDez + " rd: " + rechtsDez);
-
         String fileName = srtmRaster.getFileName();
 
         int xStart = (int) (Math.floor(size * linksDez));
@@ -164,8 +161,7 @@ public class SrtmMapBoundsThread extends Thread {
         System.out.println("ulLat: " + ulLat);
         System.out.println("lrLon: " + lrLon);
         System.out.println("lrLat: " + lrLat);
-        */
-
+         */
         int visible = 0;
 
         for (int y = yStart; y < yEnde; y += verStep) {
@@ -176,7 +172,7 @@ public class SrtmMapBoundsThread extends Thread {
                 double hor = x / (double) (size);
 
                 GeoPosition geoPosition = new GeoPosition(srtmRaster.getCoord0().getLat() - ver, srtmRaster.getCoord0().getLon() + hor);
-              
+
                 Point2D ptHeight = map.getTileFactory().geoToPixel(geoPosition, map.getZoom());
 
                 GeoPosition geoPositionLL = new GeoPosition(srtmRaster.getCoord0().getLat() - ver - (1.0 / size), srtmRaster.getCoord0().getLon() + hor);
@@ -199,6 +195,11 @@ public class SrtmMapBoundsThread extends Thread {
                 double blue = colorHeight.getBlue();
 
                 java.awt.Color color = new java.awt.Color((int) (red * 255), (int) (green * 255), (int) (blue * 255), 255);
+
+                if (height == 0) {
+                    color = java.awt.Color.RED;
+                }
+
                 Point point = new Point((int) ptHeight.getX(), (int) ptHeight.getY());
 
                 Rectangle rectangle = new Rectangle((int) point.getX(), (int) point.getY(), (int) (ptHeightUR.getX() - ptHeight.getX()), (int) (ptHeightLL.getY() - ptHeight.getY()));
@@ -216,7 +217,7 @@ public class SrtmMapBoundsThread extends Thread {
                     visible++;
                 }
             }
-        }
+        } 
         //System.out.println("Visible Rects: " + visible);
         rangeListener.getRange(new Range(xStart, xEnde, yStart, yEnde, horStep, verStep));
     }

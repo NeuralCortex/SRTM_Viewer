@@ -42,4 +42,9 @@ public class RectangleInfo {
     public void setHeight(short height) {
         this.height = height;
     }
+
+    @Override
+    public String toString() {
+        return "RectangleInfo{" + "rectangle=" + rectangle + ", color=" + color + ", height=" + height + '}';
+    }
 }
