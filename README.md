@@ -1,5 +1,7 @@
 # SRTM-Viewer 1.1.0
 
+![image](https://github.com/NeuralCortex/SRTM_Viewer/blob/main/images/srtm.png)
+
 ## Funktionsweise des Programms
 
 Der SRTM-Viewer ist ein JavaFX Projekt, welches ermöglicht topografische Daten</br>
