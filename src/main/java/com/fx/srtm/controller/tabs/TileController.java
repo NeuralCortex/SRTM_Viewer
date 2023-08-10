@@ -345,6 +345,8 @@ public class TileController implements Initializable, PopulateInterface {
         btnReset.setOnAction(e -> {
             //tableViewDir.getItems().clear();
             //tableView.getItems().clear();
+            marker=null;
+            bigMap=null;
             lbTile.setText("");
             mapViewer.setOverlayPainter(null);
             painters.clear();
