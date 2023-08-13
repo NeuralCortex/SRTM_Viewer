@@ -2,6 +2,7 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
 <comment>Comment</comment>
-<entry key="SRTM_DIR">D:\Geo\SRTM1\Region_07</entry>
+<entry key="SRTM_DIR">D:\Geo\SRTM3\Eurasia</entry>
+<entry key="SRTM_TILE_COLOR">0#0.0#0000FF#1#50.0#ADFF2F#2#60.0#9ACD32#3#70.0#FFA500#4#80.0#B8860B#5#90.0#B3801A#6#100.0#FFFFFF</entry>
 <entry key="SRTM_TILE_DIR">D:\Geo\SRTM3</entry>
 </properties>

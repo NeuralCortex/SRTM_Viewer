@@ -40,6 +40,8 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
     private boolean raster = false;
     private List<ColorRow> colors;
     private GeoPosition geoPositionSel;
+    private GeneralPath generalPath;
+    private JXMapViewer mapViewer;
 
     public SrtmTilePainter(SrtmRaster srtmRaster, short[][] bigMap, int min, int max) {
         this.srtmRaster = srtmRaster;
@@ -50,6 +52,7 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
 
     @Override
     public void paint(Graphics2D g, JXMapViewer map, int i, int i1) {
+        mapViewer = map;
         g = (Graphics2D) g.create();
 
         Rectangle rect = map.getViewportBounds();
@@ -80,10 +83,21 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
             GeoPosition geoPosition2 = new GeoPosition(srtmRaster.getCoord2().getLat(), srtmRaster.getCoord2().getLon());
             GeoPosition geoPosition3 = new GeoPosition(srtmRaster.getCoord3().getLat(), srtmRaster.getCoord3().getLon());
 
+            /*
+            0 - 1
+            3 - 2
+             */
             Point2D pt0 = map.getTileFactory().geoToPixel(geoPosition0, map.getZoom());
             Point2D pt1 = map.getTileFactory().geoToPixel(geoPosition1, map.getZoom());
             Point2D pt2 = map.getTileFactory().geoToPixel(geoPosition2, map.getZoom());
             Point2D pt3 = map.getTileFactory().geoToPixel(geoPosition3, map.getZoom());
+
+            generalPath = new GeneralPath();
+            generalPath.moveTo(pt0.getX(), pt0.getY());
+            generalPath.lineTo(pt1.getX(), pt1.getY());
+            generalPath.lineTo(pt2.getX(), pt2.getY());
+            generalPath.lineTo(pt3.getX(), pt3.getY());
+            generalPath.closePath();
 
             Point2D marker = null;
             if (geoPositionSel != null) {
@@ -129,13 +143,6 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
                 }
             }
             g.setColor(Color.BLACK);
-
-            GeneralPath generalPath = new GeneralPath();
-            generalPath.moveTo(pt0.getX(), pt0.getY());
-            generalPath.lineTo(pt1.getX(), pt1.getY());
-            generalPath.lineTo(pt2.getX(), pt2.getY());
-            generalPath.lineTo(pt3.getX(), pt3.getY());
-            generalPath.closePath();
             g.draw(generalPath);
 
         });
@@ -170,5 +177,10 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
 
     public void setGeoPositionSel(GeoPosition geoPositionSel) {
         this.geoPositionSel = geoPositionSel;
+    }
+
+    public boolean isOut(GeoPosition geoPosition) {
+        Point2D marker = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
+        return !generalPath.contains(marker);
     }
 }

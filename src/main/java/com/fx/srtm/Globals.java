@@ -4,19 +4,11 @@ import java.nio.ByteOrder;
 
 public class Globals {
 
-    //Für Funktionen
-    public static enum CUSTOMER {
-        O2, VODAFONE, T_MOBILE, E_PLUS, DB_SYSTEL, COMARCH
-    };
-
-    //Globaler Schalter für Formulare
-    public static CUSTOMER customer = CUSTOMER.O2;
-
     //WGS84 SRID
     public static int WGS84_SRID = 4326;
 
     //ByteOrder
-    public static ByteOrder BYTE_ORDER = ByteOrder.LITTLE_ENDIAN;
+    public static ByteOrder BYTE_ORDER = ByteOrder.BIG_ENDIAN;
 
     //File Size
     public static int SRTM_1_SIZE = 3601;

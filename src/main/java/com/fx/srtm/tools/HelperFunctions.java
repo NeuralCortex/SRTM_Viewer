@@ -25,6 +25,7 @@ import javafx.stage.WindowEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.SloppyMath;
+import org.jxmapviewer.viewer.GeoPosition;
 
 public class HelperFunctions {
 
@@ -206,5 +207,25 @@ public class HelperFunctions {
         tileName += ".hgt";
 
         return tileName;
+    }
+
+    public static int getHeightFromTile(short bigMap[][], GeoPosition geoPosition) {
+        double dezLon = Math.abs(geoPosition.getLongitude());
+        double dezLat = Math.abs(geoPosition.getLatitude());
+
+        int intLon = (int) dezLon;
+        int intLat = (int) dezLat;
+
+        double diffLon = dezLon - intLon;
+        double diffLat = dezLat - intLat;
+        diffLat = 1.0 - diffLat;
+
+        int sizeHor = bigMap[0].length;
+        int sizeVer = bigMap.length;
+
+        double x = sizeHor * diffLon;
+        double y = sizeVer * diffLat;
+
+        return bigMap[(int) y][(int) x];
     }
 }
