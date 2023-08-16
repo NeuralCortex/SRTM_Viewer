@@ -10,6 +10,7 @@ import com.fx.srtm.pojo.Range;
 import com.fx.srtm.pojo.RectangleInfo;
 import com.fx.srtm.pojo.SrtmRaster;
 import com.fx.srtm.thread.SrtmMapBoundsThread;
+import com.fx.srtm.tools.HelperFunctions;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
@@ -18,6 +19,7 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.List;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.painter.Painter;
@@ -144,6 +146,48 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
             }
             g.setColor(Color.BLACK);
             g.draw(generalPath);
+
+            if (map.getZoom() <= 11) {
+                g.setColor(Color.BLUE);
+
+                int length = 20;
+
+                g.setStroke(new BasicStroke(2));
+
+                g.drawLine((int) pt0.getX(), (int) pt0.getY(), (int) pt0.getX(), (int) pt0.getY() - length);
+                g.drawLine((int) pt1.getX(), (int) pt1.getY(), (int) pt1.getX(), (int) pt1.getY() - length);
+
+                g.drawLine((int) pt2.getX(), (int) pt2.getY(), (int) pt2.getX(), (int) pt2.getY() + length);
+                g.drawLine((int) pt3.getX(), (int) pt3.getY(), (int) pt3.getX(), (int) pt3.getY() + length);
+
+                g.drawLine((int) pt1.getX(), (int) pt1.getY(), (int) pt1.getX() + length, (int) pt1.getY());
+                g.drawLine((int) pt2.getX(), (int) pt2.getY(), (int) pt2.getX() + length, (int) pt2.getY());
+
+                g.setStroke(new BasicStroke(2));
+
+                double widthUp = HelperFunctions.getDistance(geoPosition0.getLongitude(), geoPosition0.getLatitude(), geoPosition1.getLongitude(), geoPosition1.getLatitude());
+                double widthDown = HelperFunctions.getDistance(geoPosition3.getLongitude(), geoPosition3.getLatitude(), geoPosition2.getLongitude(), geoPosition2.getLatitude());
+                double height = HelperFunctions.getDistance(geoPosition0.getLongitude(), geoPosition0.getLatitude(), geoPosition3.getLongitude(), geoPosition3.getLatitude());
+
+                Font font = new Font("Arial", Font.BOLD, 15);
+                g.setFont(font);
+
+                String strWidthUp = formatLength(widthUp) + " km";
+                String strWidthDown = formatLength(widthDown) + " km";
+                String strHeight = formatLength(height) + " km";
+
+                Rectangle2D rectangle2dUp = g.getFontMetrics(font).getStringBounds(strWidthUp, g);
+                Rectangle2D rectangle2dDown = g.getFontMetrics(font).getStringBounds(strWidthDown, g);
+                Rectangle2D rectangle2dHeight = g.getFontMetrics(font).getStringBounds(strHeight, g);
+
+                float xUp = (float) ((pt0.getX() + pt1.getX()) / 2.0 - rectangle2dUp.getCenterX());
+                float xDown = (float) ((pt0.getX() + pt1.getX()) / 2.0 - rectangle2dDown.getCenterX());
+                float yHeight = (float) ((pt1.getY() + pt2.getY()) / 2.0 - rectangle2dHeight.getCenterY());
+
+                g.drawString(strWidthUp, xUp, (float) (pt0.getY() - 5));
+                g.drawString(strWidthDown, xDown, (float) (pt3.getY() + rectangle2dDown.getHeight()));
+                g.drawString(strHeight, (float) pt1.getX() + 5, (float) (yHeight));
+            }
 
         });
         srtmMapBoundsThread.start();
