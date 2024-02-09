@@ -22,7 +22,7 @@ import org.apache.logging.log4j.core.LoggerContext;
 public class MainApp extends Application {
 
     private static final Logger _log = LogManager.getLogger(MainApp.class);
-    private final ResourceBundle bundle = ResourceBundle.getBundle(Globals.BUNDLE_PATH, Locale.getDefault());
+    private final ResourceBundle bundle = ResourceBundle.getBundle(Globals.BUNDLE_PATH, Globals.DEFAULT_LOCALE);
 
     @Override
     public void start(Stage stage) throws Exception {

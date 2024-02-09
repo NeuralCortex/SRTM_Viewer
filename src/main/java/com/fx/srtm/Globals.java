@@ -1,6 +1,7 @@
 package com.fx.srtm;
 
 import java.nio.ByteOrder;
+import java.util.Locale;
 
 public class Globals {
 
@@ -19,6 +20,8 @@ public class Globals {
 
     //Show Test-UI (Managed UI Ein / Aus)
     public static boolean SHOW_TEST_UI = false;
+
+    public static final Locale DEFAULT_LOCALE = Locale.US;
 
     //Fenstergröße global gesteuert in 16:9
     public static final double HEIGHT = 900;//900.0f;
