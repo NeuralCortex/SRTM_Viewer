@@ -37,7 +37,7 @@ public class MainApp extends Application {
         scene.getStylesheets().add(Globals.CSS_PATH);
         stage.getIcons().add(new Image(new FileInputStream(new File(Globals.APP_LOGO_PATH))));
 
-        stage.setTitle(bundle.getString("app.name") + " " + bundle.getString("app.version"));
+        stage.setTitle(bundle.getString("app.name") + " " + MainApp.class.getPackage().getImplementationVersion());
         stage.setScene(scene);
         stage.show();
 

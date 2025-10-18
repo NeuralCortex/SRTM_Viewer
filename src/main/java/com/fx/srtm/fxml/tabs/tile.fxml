@@ -113,8 +113,8 @@
                         <Label fx:id="lbType" text="Label" />
                         <HBox HBox.hgrow="ALWAYS" />
                         <Label fx:id="lbTileMouse" />
-                        <TextField fx:id="tfLon" />
                         <TextField fx:id="tfLat" />
+                        <TextField fx:id="tfLon" />
                         <Button fx:id="btnPos" mnemonicParsing="false" text="Button" />
                         <Separator maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" orientation="VERTICAL" />
                         <Button fx:id="btnReset" mnemonicParsing="false" text="Button" />

@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Timer;
@@ -76,7 +77,7 @@ import org.jxmapviewer.viewer.GeoPosition;
 import org.jxmapviewer.viewer.TileFactoryInfo;
 
 public class TileController implements Initializable, PopulateInterface {
-    
+
     @FXML
     private BorderPane borderPane;
     @FXML
@@ -133,28 +134,30 @@ public class TileController implements Initializable, PopulateInterface {
     private TextField tfLon;
     @FXML
     private TextField tfLat;
-    
+
     private static final Logger _log = LogManager.getLogger(TileController.class);
     private final MainController mainController;
-    
+
     private final JXMapViewer mapViewer = new JXMapViewer();
     private final List<Painter<JXMapViewer>> painters = new ArrayList<>();
     private GeoPosition marker;
     private List<ColorRow> colors;
-    
+
     private final double lon = 10.671745101119196;
     private final double lat = 50.661742127393836;
-    
+
     private short bigMap[][];
     private int min = 9999;
     private int max = -1000;
-    
+
     public TileController(MainController mainController) {
         this.mainController = mainController;
     }
-    
+
     @Override
     public void initialize(URL url, ResourceBundle bundle) {
+        //for colorpicker
+        Locale.setDefault(Globals.DEFAULT_LOCALE);
         
         String colorMap = Globals.propman.getProperty(Globals.SRTM_TILE_COLOR, null);
         if (colorMap == null) {
@@ -162,9 +165,9 @@ public class TileController implements Initializable, PopulateInterface {
         } else {
             colors = expandColorMap(colorMap);
         }
-        
+
         vboxData.setPrefWidth(300.0);
-        
+
         hboxTable.setId("hec-background-blue");
         hboxOben.setId("hec-background-blue");
         hboxDir.setId("hec-background-blue");
@@ -174,7 +177,7 @@ public class TileController implements Initializable, PopulateInterface {
         lbType.setId("hec-text-white");
         lbTileMouse.setId("hec-text-white");
         cbAlpha.setId("hec-text-white");
-        
+
         lbTile.setText("");
         lbType.setText("");
         cbAlpha.setText("Alpha");
@@ -192,94 +195,94 @@ public class TileController implements Initializable, PopulateInterface {
         btnExportCol.setText("Export Color PNG");
         btnExportPov.setText("Export POV-Ray POV+TEX");
         btnColor.setText(bundle.getString("btn.reset.colors"));
-        
+
         double w = 150.0;
         btnExportHf.setMinWidth(w);
         btnExportCol.setMinWidth(w);
         btnExportPov.setMinWidth(w);
-        
+
         cbHf.setText(bundle.getString("cb.marker"));
         cbCol.setText(bundle.getString("cb.marker"));
         cbPov.setText(bundle.getString("cb.marker"));
-        
+
         cbHf.setSelected(true);
         cbCol.setSelected(true);
         cbPov.setSelected(true);
-        
+
         TableColumn<ColorRow, Integer> colIndex = new TableColumn<>(bundle.getString("table.idx"));
         TableColumn<ColorRow, Double> colPercent = new TableColumn<>(bundle.getString("table.percent"));
         TableColumn<ColorRow, javafx.scene.paint.Color> colPaint = new TableColumn<>(bundle.getString("table.color"));
-        
+
         colIndex.setCellValueFactory(new PropertyValueFactory<>("idx"));
         colPercent.setCellValueFactory(new PropertyValueFactory<>("percent"));
         colPaint.setCellValueFactory(new PropertyValueFactory<>("color"));
         colPaint.setCellFactory((param) -> {
             return new ColorRowCell();
         });
-        
+
         colIndex.setSortable(false);
         colPercent.setSortable(false);
         colPaint.setSortable(false);
-        
+
         tableColor.getColumns().addAll(colIndex, colPercent, colPaint);
         tableColor.setItems(FXCollections.observableArrayList(colors));
-        
+
         tableColor.getSelectionModel().selectedItemProperty().addListener((ov, o, n) -> {
             if (n != null) {
                 double percent = n.getPercent();
                 javafx.scene.paint.Color color = n.getColor();
-                
+
                 tfPercent.setText(percent + "");
                 cpColor.setValue(color);
             }
         });
-        
-        initOsmMap();
-        
+
+        initOsmMap(bundle);
+
         borderPane.widthProperty().addListener(e -> {
             mapViewer.repaint();
         });
         borderPane.heightProperty().addListener(e -> {
             mapViewer.repaint();
         });
-        
+
         btnLoad.setOnAction(e -> {
-            
+
             min = 9999;
             max = -1000;
             marker = null;
-            
+
             FileChooser fileChooser = new FileChooser();
-            
+
             String saveDir = Globals.propman.getProperty(Globals.SRTM_TILE_DIR, System.getProperty("user.dir"));
-            
+
             fileChooser.setInitialDirectory(new File(saveDir));
             File file = fileChooser.showOpenDialog(mainController.getStage());
-            
+
             if (file != null && file.isFile()) {
-                
+
                 lbTile.setText(file.getName());
-                
+
                 Globals.propman.setProperty(Globals.SRTM_TILE_DIR, file.getParent());
                 Globals.propman.save();
-                
+
                 try {
                     List<Short> list = HelperFunctions.readSrtmFile(file.getPath(), Globals.BYTE_ORDER);
-                    
+
                     int size = 0;
-                    
+
                     if (list.size() == (Globals.SRTM_1_SIZE * Globals.SRTM_1_SIZE)) {
                         size = Globals.SRTM_1_SIZE;
                         lbType.setText("SRTM-1");
                         bigMap = new short[size][size];
                     }
-                    
+
                     if (list.size() == (Globals.SRTM_3_SIZE * Globals.SRTM_3_SIZE)) {
                         size = Globals.SRTM_3_SIZE;
                         lbType.setText("SRTM-3");
                         bigMap = new short[size][size];
                     }
-                    
+
                     int count = 0;
                     for (int k = 0; k < list.size() - size; k += size) {
                         List<Short> subList = list.subList(k, (k + size));
@@ -293,11 +296,11 @@ public class TileController implements Initializable, PopulateInterface {
                     for (int x = 0; x < size; x++) {
                         bigMap[size - 1][x] = bigMap[size - 2][x];
                     }
-                    
+
                 } catch (Exception ex) {
                     _log.info(file.getPath() + " not found.");
                 }
-                
+
                 for (int j = 0; j < bigMap.length; j++) {
                     for (int k = 0; k < bigMap[j].length; k++) {
                         short height = bigMap[j][k];
@@ -312,7 +315,7 @@ public class TileController implements Initializable, PopulateInterface {
                         }
                     }
                 }
-                
+
                 mapViewer.setOverlayPainter(null);
                 for (int i = painters.size() - 1; i >= 0; i--) {
                     Painter painter = painters.get(i);
@@ -324,20 +327,20 @@ public class TileController implements Initializable, PopulateInterface {
                     }
                 }
                 mapViewer.repaint();
-                
+
                 SrtmRaster srtmRaster = new SrtmRaster(file.getName());
                 SrtmTilePainter srtmTilePainter = new SrtmTilePainter(srtmRaster, bigMap, min, max);
                 srtmTilePainter.setColors(colors);
                 painters.add(srtmTilePainter);
-                
+
                 CompoundPainter<JXMapViewer> painter = new CompoundPainter<>(painters);
                 mapViewer.setOverlayPainter(painter);
                 mapViewer.repaint();
-                
+
                 reorderPainters();
             }
         });
-        
+
         cbAlpha.selectedProperty().addListener((ov, o, n) -> {
             for (int i = 0; i < painters.size(); i++) {
                 Painter painter = painters.get(i);
@@ -349,7 +352,7 @@ public class TileController implements Initializable, PopulateInterface {
                 }
             }
         });
-        
+
         btnReset.setOnAction(e -> {
             //tableViewDir.getItems().clear();
             //tableView.getItems().clear();
@@ -361,17 +364,17 @@ public class TileController implements Initializable, PopulateInterface {
             painters.clear();
             mapViewer.repaint();
         });
-        
+
         btnSaveColor.setOnAction(e -> {
             ColorRow colorRow = tableColor.getSelectionModel().getSelectedItem();
             if (colorRow != null) {
                 try {
                     double percent = Double.valueOf(tfPercent.getText());
                     javafx.scene.paint.Color color = cpColor.getValue();
-                    
+
                     colorRow.setPercent(percent / 100.0);
                     colorRow.setColor(color);
-                    
+
                     for (int i = 0; i < painters.size(); i++) {
                         Painter painter = painters.get(i);
                         if (painter instanceof SrtmTilePainter) {
@@ -381,51 +384,51 @@ public class TileController implements Initializable, PopulateInterface {
                             break;
                         }
                     }
-                    
+
                     Globals.propman.put(Globals.SRTM_TILE_COLOR, flattenColorMap());
                     Globals.propman.save();
-                    
+
                     tableColor.refresh();
                 } catch (Exception ex) {
                     _log.error(ex.getMessage());
                 }
             }
         });
-        
+
         btnExportHf.setOnAction(e -> {
             exportMap(bundle, Globals.EXPORT_TYPE.HEIGHT_FIELD);
         });
-        
+
         btnExportCol.setOnAction(e -> {
             exportMap(bundle, Globals.EXPORT_TYPE.COLOR_MAP);
         });
-        
+
         btnExportPov.setOnAction(e -> {
             exportMap(bundle, Globals.EXPORT_TYPE.POV_RAY);
         });
-        
+
         tfLat.setOnKeyPressed(e -> {
             getClipboardFromGoogleMaps(e);
         });
-        
+
         tfLon.setOnKeyPressed(e -> {
             getClipboardFromGoogleMaps(e);
         });
-        
+
         btnPos.setOnAction(e -> {
             if (!tfLat.getText().isEmpty() && !tfLon.getText().isEmpty()) {
                 double lat = Double.valueOf(tfLat.getText());
                 double lon = Double.valueOf(tfLon.getText());
-                
+
                 marker = new GeoPosition(lat, lon);
-                
+
                 for (int i = painters.size() - 1; i >= 0; i--) {
                     Painter painter = painters.get(i);
                     if (painter instanceof CrossPainter) {
                         painters.remove(painter);
                     }
                 }
-                
+
                 CrossPainter crossPainter = new CrossPainter(marker, bigMap, isOut(marker));
                 painters.add(crossPainter);
                 CompoundPainter<JXMapViewer> painter = new CompoundPainter<>(painters);
@@ -433,13 +436,13 @@ public class TileController implements Initializable, PopulateInterface {
                 mapViewer.repaint();
             }
         });
-        
+
         btnColor.setOnAction(e -> {
             colors = initColors();
-            
+
             tableColor.getItems().clear();
             tableColor.setItems(FXCollections.observableArrayList(colors));
-            
+
             for (int i = 0; i < painters.size(); i++) {
                 Painter painter = painters.get(i);
                 if (painter instanceof SrtmTilePainter) {
@@ -449,15 +452,15 @@ public class TileController implements Initializable, PopulateInterface {
                     break;
                 }
             }
-            
+
             tfPercent.setText("");
             cpColor.setValue(javafx.scene.paint.Color.WHITE);
-            
+
             Globals.propman.put(Globals.SRTM_TILE_COLOR, flattenColorMap());
             Globals.propman.save();
         });
     }
-    
+
     private void reorderPainters() {
         CrossPainter crossPainter = null;
         SrtmTilePainter srtmTilePainter = null;
@@ -477,12 +480,12 @@ public class TileController implements Initializable, PopulateInterface {
         if (crossPainter != null) {
             painters.add(crossPainter);
         }
-        
+
         CompoundPainter<JXMapViewer> painter = new CompoundPainter<>(painters);
         mapViewer.setOverlayPainter(painter);
         mapViewer.repaint();
     }
-    
+
     private void getClipboardFromGoogleMaps(KeyEvent e) {
         if (e.isControlDown() && e.getCode() == KeyCode.V) {
             try {
@@ -495,50 +498,50 @@ public class TileController implements Initializable, PopulateInterface {
             }
         }
     }
-    
+
     private void exportMap(ResourceBundle bundle, Globals.EXPORT_TYPE export_type) {
         if (bigMap != null) {
-            
+
             int height = bigMap.length;
             int width = bigMap[0].length;
-            
+
             BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-            
+
             for (int j = 0; j < bigMap[0].length; j++) {
                 for (int i = 0; i < bigMap.length; i++) {
                     short h = bigMap[i][j];
-                    
+
                     if (h < 0) {
                         h = 0;
                     }
-                    
+
                     if (export_type == Globals.EXPORT_TYPE.HEIGHT_FIELD) {
-                        
+
                         double percent = HelperFunctions.getPercentFromHeight(min, max, h / 100.0) * 255.0f;
                         bufferedImage.setRGB(j, i, HelperFunctions.RGBtoInt((int) percent, (int) percent, (int) percent));
-                        
+
                     } else if (export_type == Globals.EXPORT_TYPE.COLOR_MAP) {
-                        
+
                         double percent = HelperFunctions.getPercentFromHeight(min, max, h);
                         javafx.scene.paint.Color colorHeight = HelperFunctions.genColor(colors, percent);
-                        
+
                         double red = colorHeight.getRed();
                         double green = colorHeight.getGreen();
                         double blue = colorHeight.getBlue();
-                        
+
                         java.awt.Color c = new java.awt.Color((int) (red * 255), (int) (green * 255), (int) (blue * 255));
                         bufferedImage.setRGB(j, i, c.getRGB());
-                        
+
                     } else if (export_type == Globals.EXPORT_TYPE.POV_RAY) {
-                        
+
                         double percent = HelperFunctions.getPercentFromHeight(min, max, h / 100.0) * 255.0f;
                         bufferedImage.setRGB(j, i, HelperFunctions.RGBtoInt((int) percent, (int) percent, (int) percent));
-                        
+
                     }
-                    
+
                 }
             }
-            
+
             if (export_type == Globals.EXPORT_TYPE.HEIGHT_FIELD) {
                 if (cbHf.isSelected() && marker != null) {
                     drawPosInPng(bufferedImage.createGraphics(), width, height);
@@ -548,7 +551,7 @@ public class TileController implements Initializable, PopulateInterface {
                     drawPosInPng(bufferedImage.createGraphics(), width, height);
                 }
             }
-            
+
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.initOwner(mainController.getStage());
             alert.initModality(Modality.APPLICATION_MODAL);
@@ -556,65 +559,65 @@ public class TileController implements Initializable, PopulateInterface {
             Button btnOk = (Button) alert.getDialogPane().lookupButton(ButtonType.OK);
             btnOk.setText(bundle.getString("btn.save"));
             Image image = SwingFXUtils.toFXImage(bufferedImage, null);
-            
+
             VBox vBox = new VBox();
-            
+
             ImageView imageView = new ImageView(image);
             imageView.setFitHeight(612);
             imageView.setPreserveRatio(true);
-            
+
             VBox.setMargin(imageView, new Insets(10, 10, 0, 10));
-            
+
             vBox.getChildren().add(imageView);
-            
+
             alert.getDialogPane().setContent(vBox);
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
-                
+
                 File pngDir = new File(Globals.PNG_PATH);
                 if (!pngDir.exists()) {
                     pngDir.mkdir();
                 }
-                
+
                 File povDir = new File(Globals.POV_PATH);
                 if (!povDir.exists()) {
                     povDir.mkdir();
                 }
-                
+
                 double x = -1000, z = -1000;
-                
+
                 if (marker != null && cbPov.isSelected()) {
                     if (!isOut(marker)) {
                         PngPos pngPos = positionMarker(width, height);
                         int lon = pngPos.getLon();
                         int lat = pngPos.getLat();
-                        
+
                         if (lbTile.getText().toUpperCase().contains("N") && lbTile.getText().toUpperCase().contains("E")) {
                             x = lon / (double) (width);
                             z = 1.0 - lat / (double) (height);
                         }
-                        
+
                         if (lbTile.getText().toUpperCase().contains("S") && lbTile.getText().toUpperCase().contains("E")) {
                             x = lon / (double) (width);
                             z = 1.0 - lat / (double) (height);
                         }
-                        
+
                         if (lbTile.getText().toUpperCase().contains("N") && lbTile.getText().toUpperCase().contains("W")) {
                             x = lon / (double) (width);
                             z = 1.0 - lat / (double) (height);
                         }
-                        
+
                         if (lbTile.getText().toUpperCase().contains("S") && lbTile.getText().toUpperCase().contains("W")) {
                             x = lon / (double) (width);
                             z = 1.0 - lat / (double) (height);
                         }
                     }
                 }
-                
+
                 String fileName = "";
                 String fileNamePNG = "";
                 String fileNamePOV = "";
-                
+
                 String type = "";
                 if (bigMap.length == Globals.SRTM_1_SIZE) {
                     type = "_SRTM1";
@@ -622,7 +625,7 @@ public class TileController implements Initializable, PopulateInterface {
                 if (bigMap.length == Globals.SRTM_3_SIZE) {
                     type = "_SRTM3";
                 }
-                
+
                 if (export_type == Globals.EXPORT_TYPE.HEIGHT_FIELD) {
                     fileName = lbTile.getText().replace(".hgt", "") + type + "_HEIGHTFIELD.png";
                 } else if (export_type == Globals.EXPORT_TYPE.COLOR_MAP) {
@@ -631,25 +634,25 @@ public class TileController implements Initializable, PopulateInterface {
                     fileNamePNG = lbTile.getText().replace(".hgt", "") + type + "_TEX.png";
                     fileNamePOV = lbTile.getText().replace(".hgt", "") + type + ".pov";
                 }
-                
+
                 File outputFile = new File(Globals.PNG_PATH + "/" + fileName);
-                
+
                 if (export_type == Globals.EXPORT_TYPE.POV_RAY) {
                     outputFile = new File(Globals.POV_PATH + "/" + fileNamePNG);
                 }
-                
+
                 try {
                     if (export_type == Globals.EXPORT_TYPE.POV_RAY) {
                         String blue = loadBluePrint();
                         String pov = blue.replace("#file", fileNamePNG);
                         pov = pov.replace("#x1", x + "");
                         pov = pov.replace("#z1", z + "");
-                        
+
                         BufferedWriter writer = new BufferedWriter(new FileWriter(new File(Globals.POV_PATH + "/" + fileNamePOV)));
                         writer.write(pov);
                         writer.close();
                     }
-                    
+
                     ImageIO.write(bufferedImage, "png", outputFile);
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -657,43 +660,43 @@ public class TileController implements Initializable, PopulateInterface {
             }
         }
     }
-    
+
     private String loadBluePrint() throws Exception {
         Path path = Path.of(Globals.POV_BLUEPRINT_HEIGHT_PATH);
         return Files.readString(path);
     }
-    
+
     private void drawPosInPng(Graphics2D graphics2D, int width, int height) {
         if (!isOut(marker)) {
             PngPos pngPos = positionMarker(width, height);
             int lon = pngPos.getLon();
             int lat = pngPos.getLat();
-            
+
             graphics2D.setColor(Color.RED);
             BasicStroke bs = new BasicStroke(3);
             graphics2D.setStroke(bs);
-            
+
             int halfLine = 40;
-            
+
             graphics2D.drawLine((int) lon - halfLine, (int) lat, (int) lon + halfLine, (int) lat);
             graphics2D.drawLine((int) lon, (int) lat - halfLine, (int) lon, (int) lat + halfLine);
         }
     }
-    
+
     private PngPos positionMarker(int width, int height) {
         double markLon = marker.getLongitude();
         double markLat = marker.getLatitude();
-        
+
         double dezLon = Math.abs(marker.getLongitude());
         double dezLat = Math.abs(marker.getLatitude());
 
         //System.out.println("markLon: " + markLon + " markLat: " + markLat);
         int intLon = (int) dezLon;
         int intLat = (int) dezLat;
-        
+
         double diffLon = dezLon - intLon;
         double diffLat = dezLat - intLat;
-        
+
         double diffLonPov = diffLon;
         double diffLatPov = diffLat;
 
@@ -717,13 +720,13 @@ public class TileController implements Initializable, PopulateInterface {
             diffLon = 1.0 - diffLon;
             diffLat = 1.0 - diffLat;
         }
-        
+
         int lon = (int) (width * diffLon);
         int lat = (int) (height * diffLat);
-        
+
         return new PngPos(lon, lat);
     }
-    
+
     private String flattenColorMap() {
         String erg = "";
         for (ColorRow colorRow : tableColor.getItems()) {
@@ -734,11 +737,11 @@ public class TileController implements Initializable, PopulateInterface {
         }
         return erg.substring(0, erg.length() - 1);
     }
-    
+
     private String getColorWeb(ColorRow colorRow) {
         return String.format("%02X%02X%02X", ((int) colorRow.getRed()), ((int) colorRow.getGreen()), ((int) colorRow.getBlue()));
     }
-    
+
     private List<ColorRow> expandColorMap(String flatMap) {
         List<ColorRow> list = new ArrayList<>();
         String row[] = flatMap.split("#");
@@ -746,15 +749,15 @@ public class TileController implements Initializable, PopulateInterface {
             String idxStr = row[0 + i];
             String percentStr = row[1 + i];
             String colorWeb = row[2 + i];
-            
+
             int idx = Integer.valueOf(idxStr);
             double percent = Double.valueOf(percentStr);
-            
+
             list.add(new ColorRow(idx, percent / 100.0, javafx.scene.paint.Color.web("#" + colorWeb)));
         }
         return list;
     }
-    
+
     private List<ColorRow> initColors() {
         List<ColorRow> colorRow = new ArrayList<>();
         colorRow.add(new ColorRow(0, 0.0, javafx.scene.paint.Color.web("#0000ff")));
@@ -766,24 +769,24 @@ public class TileController implements Initializable, PopulateInterface {
         colorRow.add(new ColorRow(6, 1.0, javafx.scene.paint.Color.web("#FFFFFF")));
         return colorRow;
     }
-    
+
     private Color genColor() {
         int r = (int) (Math.random() * 256);
         int g = (int) (Math.random() * 256);
         int b = (int) (Math.random() * 256);
-        
+
         Color color = new Color(r, g, b);
-        
+
         return color;
     }
-    
-    private void initOsmMap() {
-        
+
+    private void initOsmMap(ResourceBundle bundle) {
+
         TileFactoryInfo tileFactoryInfo = new OSMTileFactoryInfo();
         DefaultTileFactory defaultTileFactory = new DefaultTileFactory(tileFactoryInfo);
         defaultTileFactory.setThreadPoolSize(Runtime.getRuntime().availableProcessors());
         mapViewer.setTileFactory(defaultTileFactory);
-        
+
         final JLabel labelAttr = new JLabel();
         mapViewer.setLayout(new BorderLayout());
         mapViewer.add(labelAttr, BorderLayout.SOUTH);
@@ -791,7 +794,7 @@ public class TileController implements Initializable, PopulateInterface {
 
         // Set the focus
         GeoPosition zm = new GeoPosition(lat, lon);
-        
+
         mapViewer.setZoom(11);
         mapViewer.setAddressLocation(zm);
 
@@ -802,13 +805,15 @@ public class TileController implements Initializable, PopulateInterface {
         mapViewer.addMouseListener(new CenterMapListener(mapViewer));
         mapViewer.addMouseWheelListener(new ZoomMouseWheelListenerCursor(mapViewer));
         mapViewer.addKeyListener(new PanKeyListener(mapViewer));
-        
+
         MousePositionListener mousePositionListener = new MousePositionListener(mapViewer);
         mousePositionListener.setGeoPosListener((GeoPosition geoPosition) -> {
             Platform.runLater(() -> {
-                mainController.getLbStatus().setText("Longitude: " + geoPosition.getLongitude() + " Latitude: " + geoPosition.getLatitude());
+                String lat = String.format("%.5f", geoPosition.getLatitude());
+                String lon = String.format("%.5f", geoPosition.getLongitude());
+                mainController.getLbStatus().setText(bundle.getString("col.lat") + ": " + lat + " " + bundle.getString("col.lon") + ": " + lon);
                 lbTileMouse.setText(HelperFunctions.getTileNameSRTM(geoPosition.getLongitude(), geoPosition.getLatitude()));
-                
+
                 for (Painter painter : painters) {
                     if (painter instanceof SrtmTilePainter) {
                         SrtmTilePainter srtmTilePainter = (SrtmTilePainter) painter;
@@ -824,14 +829,14 @@ public class TileController implements Initializable, PopulateInterface {
         PosSelectionAdapter posSelectionAdapter = new PosSelectionAdapter(mapViewer);
         posSelectionAdapter.setPosSelectionAdapterListener((GeoPosition geoPosition) -> {
             marker = geoPosition;
-            
+
             for (int i = painters.size() - 1; i >= 0; i--) {
                 Painter painter = painters.get(i);
                 if (painter instanceof CrossPainter) {
                     painters.remove(painter);
                 }
             }
-            
+
             CrossPainter crossPainter = new CrossPainter(marker, bigMap, isOut(marker));
             painters.add(crossPainter);
             CompoundPainter<JXMapViewer> painter = new CompoundPainter<>(painters);
@@ -839,7 +844,7 @@ public class TileController implements Initializable, PopulateInterface {
             mapViewer.repaint();
         });
         mapViewer.addMouseListener(posSelectionAdapter);
-        
+
         try {
             SwingUtilities.invokeAndWait(() -> {
                 swingNode.setContent(mapViewer);
@@ -848,7 +853,7 @@ public class TileController implements Initializable, PopulateInterface {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        
+
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
@@ -856,7 +861,7 @@ public class TileController implements Initializable, PopulateInterface {
             }
         }, Globals.WAIT_TIME_SWING);
     }
-    
+
     public boolean isOut(GeoPosition geoPosition) {
         boolean out = true;
         for (int i = painters.size() - 1; i >= 0; i--) {
@@ -868,19 +873,19 @@ public class TileController implements Initializable, PopulateInterface {
         }
         return out;
     }
-    
+
     @Override
     public void populate() {
-        
+
     }
-    
+
     @Override
     public void reset() {
-        
+
     }
-    
+
     @Override
     public void clear() {
-        
+
     }
 }

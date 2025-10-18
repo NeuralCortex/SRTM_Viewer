@@ -129,13 +129,13 @@ public class RasterController implements Initializable, PopulateInterface {
         colColorDir.setCellFactory((param) -> {
             return new DirColorCell();
         });
-        
+
         colPath.setMinWidth(100.0);
 
         tableViewDir.setEditable(true);
         tableViewDir.getColumns().addAll(colActiveDir, colPath, colColorDir);
 
-        initOsmMap();
+        initOsmMap(bundle);
 
         borderPane.widthProperty().addListener(e -> {
             mapViewer.repaint();
@@ -188,7 +188,7 @@ public class RasterController implements Initializable, PopulateInterface {
         return color;
     }
 
-    private void initOsmMap() {
+    private void initOsmMap(ResourceBundle bundle) {
 
         TileFactoryInfo tileFactoryInfo = new OSMTileFactoryInfo();
         DefaultTileFactory defaultTileFactory = new DefaultTileFactory(tileFactoryInfo);
@@ -217,7 +217,9 @@ public class RasterController implements Initializable, PopulateInterface {
         MousePositionListener mousePositionListener = new MousePositionListener(mapViewer);
         mousePositionListener.setGeoPosListener((GeoPosition geoPosition) -> {
             Platform.runLater(() -> {
-                mainController.getLbStatus().setText("Longitude: " + geoPosition.getLongitude() + " Latitude: " + geoPosition.getLatitude());
+                String lat = String.format("%.5f", geoPosition.getLatitude());
+                String lon = String.format("%.5f", geoPosition.getLongitude());
+                mainController.getLbStatus().setText(bundle.getString("col.lat") + ": " + lat + " " + bundle.getString("col.lon") + ": " + lon);
             });
         });
         mapViewer.addMouseMotionListener(mousePositionListener);

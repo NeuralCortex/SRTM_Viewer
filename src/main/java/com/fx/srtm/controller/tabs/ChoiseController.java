@@ -65,7 +65,7 @@ public class ChoiseController implements Initializable, PopulateInterface {
         hboxOben.setId("hec-background-blue");
         btnReset.setText(bundle.getString("btn.reset"));
 
-        initOsmMap();
+        initOsmMap(bundle);
 
         borderPane.widthProperty().addListener(e -> {
             mapViewer.repaint();
@@ -81,7 +81,7 @@ public class ChoiseController implements Initializable, PopulateInterface {
         });
     }
 
-    private void initOsmMap() {
+    private void initOsmMap(ResourceBundle bundle) {
 
         TileFactoryInfo tileFactoryInfo = new OSMTileFactoryInfo();
         DefaultTileFactory defaultTileFactory = new DefaultTileFactory(tileFactoryInfo);
@@ -110,7 +110,9 @@ public class ChoiseController implements Initializable, PopulateInterface {
         MousePositionListener mousePositionListener = new MousePositionListener(mapViewer);
         mousePositionListener.setGeoPosListener((GeoPosition geoPosition) -> {
             Platform.runLater(() -> {
-                mainController.getLbStatus().setText("Longitude: " + geoPosition.getLongitude() + " Latitude: " + geoPosition.getLatitude());
+                String lat = String.format("%.5f", geoPosition.getLatitude());
+                String lon = String.format("%.5f", geoPosition.getLongitude());
+                mainController.getLbStatus().setText(bundle.getString("col.lat") + ": " + lat + " " + bundle.getString("col.lon") + ": " + lon);
 
                 String fileName = HelperFunctions.getTileNameSRTM(geoPosition.getLongitude(), geoPosition.getLatitude());
                 SrtmRaster srtmRaster = new SrtmRaster(fileName);
