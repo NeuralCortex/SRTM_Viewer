@@ -151,21 +151,25 @@ public class RasterController implements Initializable, PopulateInterface {
 
             directoryChooser.setInitialDirectory(new File(saveDir));
             File dir = directoryChooser.showDialog(mainController.getStage());
+            
+            List<File> dirs=getAllDirsRecursive(dir);
 
-            if (dir != null && dir.isDirectory()) {
+            if (dir != null) {
 
-                Globals.propman.setProperty(Globals.SRTM_DIR, dir.getAbsolutePath());
+                Globals.propman.setProperty(Globals.SRTM_DIR, dir.getParent());
                 Globals.propman.save();
 
-                ProgressDialog progressDialog = new ProgressDialog(mainController.getStage(), bundle);
+                for(File sub:dirs){
+                    ProgressDialog progressDialog = new ProgressDialog(mainController.getStage(), bundle);
 
                 Color color = genColor();
 
-                Dir dirRow = new Dir(dir.getAbsolutePath(), color, true);
+                Dir dirRow = new Dir(sub.getAbsolutePath(), color, true);
                 tableViewDir.getItems().add(dirRow);
 
-                SrtmRasterTask srtmRasterTask = new SrtmRasterTask(progressDialog, dir.listFiles(), mapViewer, painters, tableView, color, tableViewDir, dirRow);
+                SrtmRasterTask srtmRasterTask = new SrtmRasterTask(progressDialog, sub.listFiles(), mapViewer, painters, tableView, color, tableViewDir, dirRow);
                 new Thread(srtmRasterTask).start();
+                }
             }
         });
 
@@ -176,6 +180,27 @@ public class RasterController implements Initializable, PopulateInterface {
             painters.clear();
             mapViewer.repaint();
         });
+    }
+    
+    private List<File> getAllDirsRecursive(File dir) {
+        List<File> allDirs = new ArrayList<>();
+        collectDirectoriesRecursive(dir, allDirs);
+        return allDirs;
+    }
+    
+    private void collectDirectoriesRecursive(File dir, List<File> dirs) {
+        if (!dir.isDirectory()) return;
+        
+        dirs.add(dir); // Add current directory
+        
+        File[] items = dir.listFiles();
+        if (items == null) return;
+        
+        for (File item : items) {
+            if (item.isDirectory()) {
+                collectDirectoriesRecursive(item, dirs);
+            }
+        }
     }
 
     private Color genColor() {

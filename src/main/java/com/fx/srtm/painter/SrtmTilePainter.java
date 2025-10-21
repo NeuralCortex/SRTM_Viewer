@@ -6,10 +6,9 @@
 package com.fx.srtm.painter;
 
 import com.fx.srtm.pojo.ColorRow;
-import com.fx.srtm.pojo.Range;
 import com.fx.srtm.pojo.RectangleInfo;
 import com.fx.srtm.pojo.SrtmRaster;
-import com.fx.srtm.thread.SrtmMapBoundsThread;
+import com.fx.srtm.thread.MatrixThread;
 import com.fx.srtm.tools.HelperFunctions;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -20,7 +19,11 @@ import java.awt.RenderingHints;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.painter.Painter;
 import org.jxmapviewer.viewer.GeoPosition;
@@ -31,19 +34,20 @@ import org.jxmapviewer.viewer.GeoPosition;
  */
 public class SrtmTilePainter implements Painter<JXMapViewer> {
 
-    private Color color = Color.BLACK;
     private final boolean antiAlias = true;
     private final SrtmRaster srtmRaster;
     private final short[][] bigMap;
     private int min;
     private int max;
-    private boolean showHeight;
     private boolean showAlpha;
-    private boolean raster = false;
     private List<ColorRow> colors;
     private GeoPosition geoPositionSel;
     private GeneralPath generalPath;
     private JXMapViewer mapViewer;
+    private int oldZoom;
+    private RectangleInfo matrix[][];
+    private BufferedImage bufferedImage;
+    private RectangleInfo infoCursor;
 
     public SrtmTilePainter(SrtmRaster srtmRaster, short[][] bigMap, int min, int max) {
         this.srtmRaster = srtmRaster;
@@ -64,7 +68,6 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         }
 
-        g.setColor(color);
         g.setStroke(new BasicStroke(2));
 
         drawSrtmTile(g, map);
@@ -72,14 +75,61 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
         g.dispose();
     }
 
-    private void drawSrtmTile(Graphics2D g, JXMapViewer map) {
+    private BufferedImage createImageFromRectangles(RectangleInfo matrix[][], int pixelSize) {
+        if (matrix == null || matrix.length == 0 || matrix[0].length == 0) {
+            throw new IllegalArgumentException("Matrix cannot be null or empty");
+        }
+
+        int rows = matrix.length;
+        int cols = matrix[0].length;
+        int width = cols * pixelSize;
+        int height = rows * pixelSize;
+
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                Color color = matrix[i][j].getColor();
+
+                // Fill the pixel area for this rectangle
+                for (int y = i * pixelSize; y < (i + 1) * pixelSize; y++) {
+                    for (int x = j * pixelSize; x < (j + 1) * pixelSize; x++) {
+                        image.setRGB(x, y, color.getRGB());
+                    }
+                }
+            }
+        }
+
+        return image;
+    }
+
+    private BufferedImage createImageFromMatrix() {
+        long start = System.currentTimeMillis();
         int size = bigMap.length;
+        matrix = new RectangleInfo[size][size];
+        MatrixThread matrixThread = new MatrixThread(matrix, mapViewer, bigMap, srtmRaster, min, max, colors, showAlpha ? 100 : 255);
+        matrixThread.process();
+        System.out.println("Timediff: " + (System.currentTimeMillis() - start));
+        return bufferedImage = createImageFromRectangles(matrix, 1);
+    }
 
-        RectangleInfo matrix[][] = new RectangleInfo[size][size];
+    private void drawSrtmTile(Graphics2D g, JXMapViewer map) {
+        if (oldZoom != map.getZoom()) {
+            bufferedImage = createImageFromMatrix();
+            oldZoom = mapViewer.getZoom();
+        }
 
-        SrtmMapBoundsThread srtmMapBoundsThread = new SrtmMapBoundsThread(matrix, map, bigMap, srtmRaster, min, max, colors);
-        srtmMapBoundsThread.setRangeListener((Range range) -> {
+        GeoPosition geoPositionTL = new GeoPosition(srtmRaster.getCoord0().getLat(), srtmRaster.getCoord0().getLon());
+        Point2D pTL = map.getTileFactory().geoToPixel(geoPositionTL, map.getZoom());
 
+        GeoPosition geoPositionLR = new GeoPosition(srtmRaster.getCoord2().getLat(), srtmRaster.getCoord2().getLon());
+        Point2D pLR = map.getTileFactory().geoToPixel(geoPositionLR, map.getZoom());
+
+        int width = (int) (pLR.getX() - pTL.getX());
+        int height = (int) (pLR.getY() - pTL.getY());
+        g.drawImage(bufferedImage, (int) pTL.getX(), (int) pTL.getY(), width, height, null);
+
+        if (map.getZoom() <= 11) {
             GeoPosition geoPosition0 = new GeoPosition(srtmRaster.getCoord0().getLat(), srtmRaster.getCoord0().getLon());
             GeoPosition geoPosition1 = new GeoPosition(srtmRaster.getCoord1().getLat(), srtmRaster.getCoord1().getLon());
             GeoPosition geoPosition2 = new GeoPosition(srtmRaster.getCoord2().getLat(), srtmRaster.getCoord2().getLon());
@@ -101,100 +151,113 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
             generalPath.lineTo(pt3.getX(), pt3.getY());
             generalPath.closePath();
 
-            Point2D marker = null;
-            if (geoPositionSel != null) {
-                marker = map.getTileFactory().geoToPixel(geoPositionSel, map.getZoom());
-            }
-
-            for (int y = range.getyStart(); y < range.getyEnde(); y += range.getVerStep()) {
-
-                for (int x = range.getxStart(); x < range.getxEnde(); x += range.getHorStep()) {
-
-                    if (matrix[y][x] != null) {
-                        Color c = matrix[y][x].getColor();
-                        if (showAlpha) {
-                            g.setColor(new java.awt.Color(c.getRed(), c.getGreen(), c.getBlue(), 30));
-                        } else {
-                            g.setColor(c);
-                        }
-
-                        g.fill(matrix[y][x].getRectangle());
-                        g.draw(matrix[y][x].getRectangle());
-                    }
-                }
-            }
-
-            for (int y = range.getyStart(); y < range.getyEnde(); y += range.getVerStep()) {
-
-                for (int x = range.getxStart(); x < range.getxEnde(); x += range.getVerStep()) {
-                    if (matrix[y][x] != null) {
-                        if (marker != null) {
-                            if (matrix[y][x].getRectangle().contains(marker)) {
-                                g.setColor(Color.BLACK);
-
-                                g.draw(matrix[y][x].getRectangle());
-                                Rectangle rectangle = matrix[y][x].getRectangle();
-                                g.fillOval((int) rectangle.getCenterX(), (int) rectangle.getCenterY(), 3, 3);
-
-                                g.setFont(new Font("Arial", Font.PLAIN, 10));
-                                g.drawString(matrix[y][x].getHeight() + " m", (float) rectangle.getCenterX() + 5, (float) rectangle.getCenterY() - 5);
-
-                            }
-                        }
-                    }
-                }
-            }
             g.setColor(Color.BLACK);
             g.draw(generalPath);
 
-            if (map.getZoom() <= 11) {
-                g.setColor(Color.BLUE);
+            g.setColor(Color.BLUE);
 
-                int length = 20;
+            int length = 20;
 
-                g.setStroke(new BasicStroke(2));
+            g.setStroke(new BasicStroke(2));
 
-                g.drawLine((int) pt0.getX(), (int) pt0.getY(), (int) pt0.getX(), (int) pt0.getY() - length);
-                g.drawLine((int) pt1.getX(), (int) pt1.getY(), (int) pt1.getX(), (int) pt1.getY() - length);
+            g.drawLine((int) pt0.getX(), (int) pt0.getY(), (int) pt0.getX(), (int) pt0.getY() - length);
+            g.drawLine((int) pt1.getX(), (int) pt1.getY(), (int) pt1.getX(), (int) pt1.getY() - length);
 
-                g.drawLine((int) pt2.getX(), (int) pt2.getY(), (int) pt2.getX(), (int) pt2.getY() + length);
-                g.drawLine((int) pt3.getX(), (int) pt3.getY(), (int) pt3.getX(), (int) pt3.getY() + length);
+            g.drawLine((int) pt2.getX(), (int) pt2.getY(), (int) pt2.getX(), (int) pt2.getY() + length);
+            g.drawLine((int) pt3.getX(), (int) pt3.getY(), (int) pt3.getX(), (int) pt3.getY() + length);
 
-                g.drawLine((int) pt1.getX(), (int) pt1.getY(), (int) pt1.getX() + length, (int) pt1.getY());
-                g.drawLine((int) pt2.getX(), (int) pt2.getY(), (int) pt2.getX() + length, (int) pt2.getY());
+            g.drawLine((int) pt1.getX(), (int) pt1.getY(), (int) pt1.getX() + length, (int) pt1.getY());
+            g.drawLine((int) pt2.getX(), (int) pt2.getY(), (int) pt2.getX() + length, (int) pt2.getY());
 
-                g.setStroke(new BasicStroke(2));
+            g.setStroke(new BasicStroke(2));
 
-                double widthUp = HelperFunctions.getDistance(geoPosition0.getLongitude(), geoPosition0.getLatitude(), geoPosition1.getLongitude(), geoPosition1.getLatitude());
-                double widthDown = HelperFunctions.getDistance(geoPosition3.getLongitude(), geoPosition3.getLatitude(), geoPosition2.getLongitude(), geoPosition2.getLatitude());
-                double height = HelperFunctions.getDistance(geoPosition0.getLongitude(), geoPosition0.getLatitude(), geoPosition3.getLongitude(), geoPosition3.getLatitude());
+            double widthUp = HelperFunctions.getDistance(geoPosition0.getLongitude(), geoPosition0.getLatitude(), geoPosition1.getLongitude(), geoPosition1.getLatitude());
+            double widthDown = HelperFunctions.getDistance(geoPosition3.getLongitude(), geoPosition3.getLatitude(), geoPosition2.getLongitude(), geoPosition2.getLatitude());
+            double h = HelperFunctions.getDistance(geoPosition0.getLongitude(), geoPosition0.getLatitude(), geoPosition3.getLongitude(), geoPosition3.getLatitude());
 
-                Font font = new Font("Arial", Font.BOLD, 15);
-                g.setFont(font);
+            Font font = new Font("Arial", Font.BOLD, 15);
+            g.setFont(font);
 
-                String strWidthUp = formatLength(widthUp) + " km";
-                String strWidthDown = formatLength(widthDown) + " km";
-                String strHeight = formatLength(height) + " km";
+            String strWidthUp = formatLength(widthUp) + " km";
+            String strWidthDown = formatLength(widthDown) + " km";
+            String strHeight = formatLength(h) + " km";
 
-                Rectangle2D rectangle2dUp = g.getFontMetrics(font).getStringBounds(strWidthUp, g);
-                Rectangle2D rectangle2dDown = g.getFontMetrics(font).getStringBounds(strWidthDown, g);
-                Rectangle2D rectangle2dHeight = g.getFontMetrics(font).getStringBounds(strHeight, g);
+            Rectangle2D rectangle2dUp = g.getFontMetrics(font).getStringBounds(strWidthUp, g);
+            Rectangle2D rectangle2dDown = g.getFontMetrics(font).getStringBounds(strWidthDown, g);
+            Rectangle2D rectangle2dHeight = g.getFontMetrics(font).getStringBounds(strHeight, g);
 
-                float xUp = (float) ((pt0.getX() + pt1.getX()) / 2.0 - rectangle2dUp.getCenterX());
-                float xDown = (float) ((pt0.getX() + pt1.getX()) / 2.0 - rectangle2dDown.getCenterX());
-                float yHeight = (float) ((pt1.getY() + pt2.getY()) / 2.0 - rectangle2dHeight.getCenterY());
+            float xUp = (float) ((pt0.getX() + pt1.getX()) / 2.0 - rectangle2dUp.getCenterX());
+            float xDown = (float) ((pt0.getX() + pt1.getX()) / 2.0 - rectangle2dDown.getCenterX());
+            float yHeight = (float) ((pt1.getY() + pt2.getY()) / 2.0 - rectangle2dHeight.getCenterY());
 
-                g.drawString(strWidthUp, xUp, (float) (pt0.getY() - 5));
-                g.drawString(strWidthDown, xDown, (float) (pt3.getY() + rectangle2dDown.getHeight()));
-                g.drawString(strHeight, (float) pt1.getX() + 5, (float) (yHeight));
+            g.drawString(strWidthUp, xUp, (float) (pt0.getY() - 5));
+            g.drawString(strWidthDown, xDown, (float) (pt3.getY() + rectangle2dDown.getHeight()));
+            g.drawString(strHeight, (float) pt1.getX() + 5, (float) (yHeight));
+
+        }
+
+        if (map.getZoom() <= 3) {
+            if (geoPositionSel != null) {
+                Point2D marker = map.getTileFactory().geoToPixel(geoPositionSel, map.getZoom());
+                findRectangleInMatrix(matrix, marker);
             }
 
-        });
-        srtmMapBoundsThread.start();
+            if (infoCursor != null) {
+                g.setColor(Color.BLACK);
+
+                g.draw(infoCursor.getRectangle());
+                Rectangle rectangle = infoCursor.getRectangle();
+                g.fillOval((int) rectangle.getCenterX(), (int) rectangle.getCenterY(), 3, 3);
+
+                g.setFont(new Font("Arial", Font.PLAIN, 10));
+                g.drawString(infoCursor.getHeight() + " m", (float) rectangle.getCenterX() + 5, (float) rectangle.getCenterY() - 5);
+            }
+        }
+    }
+
+    private void findRectangleInMatrix(RectangleInfo matrix[][], Point2D marker) {
+        int size = matrix.length;
+        // Get the number of available cores
+        int numCores = Runtime.getRuntime().availableProcessors();
+        ExecutorService executor = Executors.newFixedThreadPool(numCores);
+
+        // Calculate rows per thread
+        int rowsPerThread = size / numCores;
+        if (rowsPerThread == 0) {
+            rowsPerThread = 1; // Ensure at least one row per thread
+        }
+
+        // Submit tasks for each chunk of rows
+        for (int i = 0; i < size; i += rowsPerThread) {
+            final int startRow = i;
+            final int endRow = Math.min(i + rowsPerThread, size);
+            executor.submit(() -> processMatrix(matrix, marker, startRow, endRow));
+        }
+
+        // Shutdown executor and wait for tasks to complete
+        executor.shutdown();
         try {
-            srtmMapBoundsThread.join();
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
+            if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+                executor.shutdownNow(); // Force shutdown if tasks don't complete
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt(); // Preserve interrupt status
+        }
+    }
+
+    private void processMatrix(RectangleInfo matrix[][], Point2D marker, int startRow, int endRow) {
+        for (int x = startRow; x < endRow; x++) {
+            for (int y = 0; y < matrix.length; y++) {
+                if (matrix[y][x] != null) {
+                    if (marker != null) {
+                        if (matrix[y][x].getRectangle().contains(marker)) {
+                            infoCursor = matrix[y][x];
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -204,6 +267,9 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
 
     public void setColors(List<ColorRow> colors) {
         this.colors = colors;
+        if (matrix != null) {
+            createImageFromMatrix();
+        }
     }
 
     public void setMinMax(int min, int max) {
@@ -211,12 +277,9 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
         this.max = max;
     }
 
-    public void setShowHeight(boolean showHeight) {
-        this.showHeight = showHeight;
-    }
-
     public void setShowAlpha(boolean showAlpha) {
         this.showAlpha = showAlpha;
+        bufferedImage = createImageFromMatrix();
     }
 
     public void setGeoPositionSel(GeoPosition geoPositionSel) {
@@ -224,7 +287,11 @@ public class SrtmTilePainter implements Painter<JXMapViewer> {
     }
 
     public boolean isOut(GeoPosition geoPosition) {
-        Point2D marker = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
-        return !generalPath.contains(marker);
+        boolean isOut = true;
+        if (generalPath != null && geoPosition != null) {
+            Point2D marker = mapViewer.getTileFactory().geoToPixel(geoPosition, mapViewer.getZoom());
+            isOut = !generalPath.contains(marker);
+        }
+        return isOut;
     }
 }

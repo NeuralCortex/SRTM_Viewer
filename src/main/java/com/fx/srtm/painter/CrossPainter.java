@@ -55,6 +55,7 @@ public class CrossPainter implements Painter<JXMapViewer> {
 
     private void drawPoint(Graphics2D g, JXMapViewer map) {
 
+        if(geoPosition!=null){
         Point2D pt = map.getTileFactory().geoToPixel(geoPosition, map.getZoom());
 
         int halfLine = 20;
@@ -69,6 +70,8 @@ public class CrossPainter implements Painter<JXMapViewer> {
 
             g.setFont(new Font("Arial", Font.PLAIN, 10));
             g.drawString(height + "m", (int) pt.getX() + 5, (int) pt.getY() - 5);
+        }    
         }
+        
     }
 }

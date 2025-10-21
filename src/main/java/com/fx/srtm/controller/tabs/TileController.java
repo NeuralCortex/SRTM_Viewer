@@ -51,6 +51,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -158,7 +160,7 @@ public class TileController implements Initializable, PopulateInterface {
     public void initialize(URL url, ResourceBundle bundle) {
         //for colorpicker
         Locale.setDefault(Globals.DEFAULT_LOCALE);
-        
+
         String colorMap = Globals.propman.getProperty(Globals.SRTM_TILE_COLOR, null);
         if (colorMap == null) {
             colors = initColors();
@@ -344,8 +346,7 @@ public class TileController implements Initializable, PopulateInterface {
         cbAlpha.selectedProperty().addListener((ov, o, n) -> {
             for (int i = 0; i < painters.size(); i++) {
                 Painter painter = painters.get(i);
-                if (painter instanceof SrtmTilePainter) {
-                    SrtmTilePainter srtmTilePainter = (SrtmTilePainter) painter;
+                if (painter instanceof SrtmTilePainter srtmTilePainter) {
                     srtmTilePainter.setShowAlpha(n);
                     mapViewer.repaint();
                     break;
@@ -556,14 +557,27 @@ public class TileController implements Initializable, PopulateInterface {
             alert.initOwner(mainController.getStage());
             alert.initModality(Modality.APPLICATION_MODAL);
             alert.setHeaderText(lbTile.getText());
+            alert.setTitle(bundle.getString("dlg.preview.title"));
             Button btnOk = (Button) alert.getDialogPane().lookupButton(ButtonType.OK);
             btnOk.setText(bundle.getString("btn.save"));
             Image image = SwingFXUtils.toFXImage(bufferedImage, null);
 
+            String strLat = lbTile.getText().substring(1, 3);
+            String strLon = lbTile.getText().substring(4, 7);
+            int startLat = Integer.parseInt(strLat);
+            int startLon = Integer.parseInt(strLon);
+
+            double distY = HelperFunctions.getDistance(startLon, startLat, startLon, startLat + 1);
+            double distX = HelperFunctions.getDistance(startLon, startLat, startLon + 1, startLat);
+
+            double ratio = distX / distY;
+
+            image=scaleImage(image, ratio);
+            
             VBox vBox = new VBox();
 
             ImageView imageView = new ImageView(image);
-            imageView.setFitHeight(612);
+            imageView.setFitHeight(600);
             imageView.setPreserveRatio(true);
 
             VBox.setMargin(imageView, new Insets(10, 10, 0, 10));
@@ -659,6 +673,26 @@ public class TileController implements Initializable, PopulateInterface {
                 }
             }
         }
+    }
+
+  private Image scaleImage(Image original, double ratio) {
+        int newHeight = (int) (original.getHeight());
+        int newWidth = (int) (newHeight * ratio);
+        
+        WritableImage scaled = new WritableImage(newWidth, newHeight);
+        PixelWriter writer = scaled.getPixelWriter();
+        
+        // Read pixels from original and write to scaled
+        for (int y = 0; y < newHeight; y++) {
+            for (int x = 0; x < newWidth; x++) {
+                // Get pixel from scaled position in original
+                double srcX = x / ratio;
+                double srcY = y ;
+                writer.setArgb(x, y, original.getPixelReader().getArgb((int)srcX, (int)srcY));
+            }
+        }
+        
+        return scaled;
     }
 
     private String loadBluePrint() throws Exception {
@@ -811,8 +845,9 @@ public class TileController implements Initializable, PopulateInterface {
             Platform.runLater(() -> {
                 String lat = String.format("%.5f", geoPosition.getLatitude());
                 String lon = String.format("%.5f", geoPosition.getLongitude());
-                mainController.getLbStatus().setText(bundle.getString("col.lat") + ": " + lat + " " + bundle.getString("col.lon") + ": " + lon);
-                lbTileMouse.setText(HelperFunctions.getTileNameSRTM(geoPosition.getLongitude(), geoPosition.getLatitude()));
+                String tileName=HelperFunctions.getTileNameSRTM(geoPosition.getLongitude(), geoPosition.getLatitude());
+                mainController.getLbStatus().setText(tileName+" "+bundle.getString("col.lat") + ": " + lat + " " + bundle.getString("col.lon") + ": " + lon);
+                lbTileMouse.setText("");
 
                 for (Painter painter : painters) {
                     if (painter instanceof SrtmTilePainter) {
@@ -820,6 +855,7 @@ public class TileController implements Initializable, PopulateInterface {
                         srtmTilePainter.setGeoPositionSel(geoPosition);
                     }
                 }
+
                 mapViewer.repaint();
             });
         });
@@ -829,6 +865,7 @@ public class TileController implements Initializable, PopulateInterface {
         PosSelectionAdapter posSelectionAdapter = new PosSelectionAdapter(mapViewer);
         posSelectionAdapter.setPosSelectionAdapterListener((GeoPosition geoPosition) -> {
             marker = geoPosition;
+            System.out.println(marker);
 
             for (int i = painters.size() - 1; i >= 0; i--) {
                 Painter painter = painters.get(i);
